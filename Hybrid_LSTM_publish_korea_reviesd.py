@@ -152,9 +152,13 @@ def fit_model_MixLSTM(res_F1, res ,_iter, X_train, y_train, X_test, y_test, X2_t
     return res_F1, res     
 
 def fit_model_DecisionTree(X_train, y_train, X_test, y_test, X2_train, X2_test):
-    # 메타 특성을 합치기 위해 입력 데이터를 결합합니다.
-    X_train_combined = np.hstack((X_train.reshape(X_train.shape[0], -1), X2_train))
-    X_test_combined = np.hstack((X_test.reshape(X_test.shape[0], -1), X2_test))
+    
+    X_train_combined = X_train.reshape(X_train.shape[0], -1)
+    X_test_combined = X_test.reshape(X_test.shape[0], -1)
+    
+    # # 메타 특성을 합치기 위해 입력 데이터를 결합합니다.
+    # X_train_combined = np.hstack((X_train.reshape(X_train.shape[0], -1), X2_train))
+    # X_test_combined = np.hstack((X_test.reshape(X_test.shape[0], -1), X2_test))
 
     # 결정 트리 분류기를 정의하고, 학습 데이터를 사용하여 모델을 학습시킵니다.
     dt_classifier = DecisionTreeClassifier(random_state=42)
@@ -187,36 +191,40 @@ def fit_model_xgboost(X_train, y_train, X_test, y_test, X2_train, X2_test):
     X_train_combined = np.hstack((X_train.reshape(X_train.shape[0], -1), X2_train))
     X_test_combined = np.hstack((X_test.reshape(X_test.shape[0], -1), X2_test))
     
+
+
     # XGBoost classifier를 초기화합니다.
-    model = XGBClassifier(objective='binary:logistic', random_state=42)
+    model = XGBClassifier(n_estimators=500, learning_rate=0.2, max_depth=4, random_state=42)
+    model.fit(X_train, y_train,  verbose=True)
+    
+    
+    # # GridSearchCV를 위한 하이퍼파라미터 그리드를 생성합니다.
+    # param_grid = {
+    #     'n_estimators': [100, 200, 300, 400, 500, 50, 150],
+    #     'learning_rate': [0.01, 0.05, 0.1, 0.07, 0.04, 0.09]
+    # }
 
-    # GridSearchCV를 위한 하이퍼파라미터 그리드를 생성합니다.
-    param_grid = {
-        'n_estimators': [100, 200, 300, 400, 500, 50, 150],
-        'learning_rate': [0.01, 0.05, 0.1, 0.07, 0.04, 0.09]
-    }
+    # # GridSearchCV를 초기화합니다.
+    # grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
 
-    # GridSearchCV를 초기화합니다.
-    grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+    # # GridSearchCV를 이용하여 최적의 하이퍼파라미터를 찾고 모델을 학습시킵니다.
+    # grid_search.fit(X_train_combined, y_train)
 
-    # GridSearchCV를 이용하여 최적의 하이퍼파라미터를 찾고 모델을 학습시킵니다.
-    grid_search.fit(X_train_combined, y_train)
-
-    # 최적의 하이퍼파라미터를 출력합니다.
-    print(f"Best Parameters: {grid_search.best_params_}")
+    # # 최적의 하이퍼파라미터를 출력합니다.
+    # print(f"Best Parameters: {grid_search.best_params_}")
 
     # 최적의 모델로 부터 예측을 얻습니다.
-    y_pred = grid_search.predict(X_test_combined)
+    y_pred = model.predict(X_test_combined)
 
     # 성능 평가를 위한 정확도, 정밀도, 재현율, F1-score를 계산합니다.
     accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred, zero_division=1)
-    recall = recall_score(y_test, y_pred, zero_division=1)
-    f1 = f1_score(y_test, y_pred, zero_division=1)
+    # precision = precision_score(y_test, y_pred, zero_division=1)
+    # recall = recall_score(y_test, y_pred, zero_division=1)
+    # f1 = f1_score(y_test, y_pred, zero_division=1)
     
-    res_list = [accuracy, precision, recall, f1]
+    #res_list = [accuracy, precision, recall, f1]
 
-    return res_list
+    return accuracy
 
 # 머신러닝 모델 구현을 위한 코드
 def run_ML(model_id,n_steps_out):
@@ -290,10 +298,16 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
     print('run 함수 실행')
            
     n_station = 7
+    # string =   'mixed_LSTM/data_chg_'
+    # string2 =  'mixed_LSTm/data_chg_pred_occ_t_'
     string =   'korea_data/data_chg_'
     string2 =  'korea_data/data_chg_pred_occ_t_'
+
     station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv']
     station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv']
+
+    # station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv', string+'8.csv', string+'9.csv']
+    # station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv', string2+'8.csv', string2+'9.csv']
   
     res_all=[]; res_all_F1=[]
     
@@ -314,8 +328,8 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
             elif model_id == 'XGBoost':
                  res_list = fit_model_xgboost(X_train, y_train, X_test, y_test, X2_train, X2_test)
 
-        print('acc, precision, recall, f1 score : ', res_list) 
-        # print('\nfeatures_importances_ : \n', important_features)
+        print('acc : ',  res_list) 
+        #print('\nfeatures_importances_ : \n', important_features)
         
          
     #     _mean = np.mean(res[:,-1:], axis=0)
