@@ -106,15 +106,27 @@ def fit_model_MixLSTM(res_F1, res ,_iter, X_train, y_train, X_test, y_test, X2_t
                    n_steps_in, n_steps_out, n_features, n_n_lstm, dropout, n_epoch, bat_size):
     
     input1 = keras.Input(shape=(n_steps_in, n_features))
-    input2 = keras.Input(shape=(147,))  
-    model_LSTM=LSTM(n_n_lstm)(input1)
-    model_LSTM=Dropout(dropout)(model_LSTM)
-    model_LSTM=Dense(18, activation='relu')(model_LSTM)
+    input2 = keras.Input(shape=(147,))
+
+    input1_reshaped = keras.layers.Reshape((n_steps_in, 1, 1, n_features))(input1)
+
+# ConvLSTM 변경
+    model_ConvLSTM = keras.layers.ConvLSTM2D(n_n_lstm, (1, 1))(input1_reshaped)
+    model_ConvLSTM = keras.layers.Flatten()(model_ConvLSTM)
+    model_ConvLSTM = keras.layers.Dropout(dropout)(model_ConvLSTM)
+    model_ConvLSTM = keras.layers.Dense(18, activation='relu')(model_ConvLSTM)
+
+
+
+    #model_LSTM=LSTM(n_n_lstm)(input1)
+    #model_LSTM=Dropout(dropout)(model_LSTM)
+    #model_LSTM=Dense(18, activation='relu')(model_LSTM)
    
     meta_layer = keras.layers.Dense(147, activation="relu")(input2)
     meta_layer = keras.layers.Dense(64, activation="relu")(meta_layer)    
     meta_layer = keras.layers.Dense(32, activation="relu")(meta_layer)
-    model_merge = keras.layers.concatenate([model_LSTM, meta_layer])
+
+    model_merge = keras.layers.concatenate([model_ConvLSTM, meta_layer])
     model_merge = Dense(100, activation='relu')(model_merge)
     model_merge = Dropout(dropout)(model_merge)    
     output = Dense(n_steps_out, activation='sigmoid')(model_merge)
@@ -303,14 +315,17 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
 
     #string =   'mixed_LSTM/data_chg_'
     #string2 =  'mixed_LSTm/data_chg_pred_occ_t_'
+    
+    #station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv', string+'8.csv', string+'9.csv']
+    #station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv', string2+'8.csv', string2+'9.csv']
+    
     string =   'korea_data/data_chg_'
     string2 =  'korea_data/data_chg_pred_occ_t_'
 
-    #station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv']
-    #station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv']
+    station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv']
+    station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv']
 
-    station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv', string+'8.csv', string+'9.csv']
-    station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv', string2+'8.csv', string2+'9.csv']
+    
   
     res_all=[]; res_all_F1=[]
     
@@ -331,26 +346,30 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
             elif model_id == 'XGBoost':
                  res_list = fit_model_xgboost(X_train, y_train, X_test, y_test, X2_train, X2_test)
 
-        print('acc : ',  res_list) 
-        print('\nfeatures_importances_ : \n', important_features)
+        #print(res_F1)
+        #print(res)
+        
+        #print('acc : ',  res_list) 
+        #print('\nfeatures_importances_ : \n', important_features)
         
          
-    #     _mean = np.mean(res[:,-1:], axis=0)
-    #     _std  = np.std(res[:,-1:], axis=0)
-    #     res_all.append([_mean,_std])
+        _mean = np.mean(res[:,-1:], axis=0)
+        _std  = np.std(res[:,-1:], axis=0)
+        res_all.append([_mean,_std])
        
-    #     _mean_F1 = np.mean(res_F1, axis=0)
-    #     res_all_F1.append([_mean_F1])
+        _mean_F1 = np.mean(res_F1, axis=0)
+        res_all_F1.append([_mean_F1])
         
-    # temp=[]
-    # for i in range(n_station):            
-    #     temp.append(res_all[i][0])
+    temp=[]
+    for i in range(n_station):            
+        temp.append(res_all[i][0])
 
-    #     accuracy_avg1=np.mean(temp, axis=0) # 전체 아웃풋에 대한 평균 값
-    # accuracy_avg2=np.mean(temp, axis=1)     # 아웃풋 각각을 저장
-    # avg_metrics_prec_recall_F1 = np.mean(res_all_F1, axis=0)
+        accuracy_avg1=np.mean(temp, axis=0) # 전체 아웃풋에 대한 평균 값
+    accuracy_avg2=np.mean(temp, axis=1)     # 아웃풋 각각을 저장
+    avg_metrics_prec_recall_F1 = np.mean(res_all_F1, axis=0)
     
-    return res_list
+    return accuracy_avg1, accuracy_avg2, res_all, res_all_F1, avg_metrics_prec_recall_F1
+    #return res_list
 
 
 def main():
@@ -367,10 +386,10 @@ def main():
     accuracy_avg_1 = []
     accuracy_avg_2 = []
     flag_sensitivity = 0  
-    model_id = 'decision_tree' 
+    model_id = 'Mix_LSTM' 
     flag_ML = 0  # to run machine learning models, set  flag_ML=1 otherwise 0
     # for ML, we set n_steps_out=36 as we compute the predcition for all forecasting cases 
-    '''
+    
     if  flag_ML == 1:
         n_steps_out = 36
     
@@ -412,10 +431,10 @@ def main():
         mean_all  = np.mean(vec_mean_metrics,axis=0)
         print('vec_mean_metrics',vec_mean_metrics)
         print('_mean_all',mean_all)
-    '''
-    print(model_id + " 실행 결과")
-    result = run(model_id, n_steps_in, n_steps_out, n_features,
-        n_epoch_global, n_trivals, n_out, n_n_lstm, dropout, bat_size)    
+    
+    #print(model_id + " 실행 결과")
+    #result = run(model_id, n_steps_in, n_steps_out, n_features,
+    #    n_epoch_global, n_trivals, n_out, n_n_lstm, dropout, bat_size)    
 main() 
 
 
