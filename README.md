@@ -7,4 +7,4 @@ Data Changed by M.J. Kang.
 
 Dundee, UK -> Seoul, Korea
 
-The original data can found at the open data of the city of Seoul, Korea (https://data.go.kr)
+The original data can be found in the open data of the city of Seoul, Korea (https://www.data.go.kr/data/15092859/fileData.do)
