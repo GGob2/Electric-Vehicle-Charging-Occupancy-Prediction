@@ -15,6 +15,7 @@ import time
 import pandas as pd
 import numpy  as np
 import graphviz
+import time
 
 from numpy import array
 from matplotlib import pyplot
@@ -110,23 +111,28 @@ def fit_model_MixLSTM(res_F1, res ,_iter, X_train, y_train, X_test, y_test, X2_t
 
     input1_reshaped = keras.layers.Reshape((n_steps_in, 1, 1, n_features))(input1)
 
-# ConvLSTM 변경
-    model_ConvLSTM = keras.layers.ConvLSTM2D(n_n_lstm, (1, 1))(input1_reshaped)
-    model_ConvLSTM = keras.layers.Flatten()(model_ConvLSTM)
-    model_ConvLSTM = keras.layers.Dropout(dropout)(model_ConvLSTM)
-    model_ConvLSTM = keras.layers.Dense(18, activation='relu')(model_ConvLSTM)
+    # CNN-LSTM
+    model_CNN = keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(input1)
+    model_CNN = keras.layers.MaxPooling1D(pool_size=2)(model_CNN)
+    
 
+    # ConvLSTM 변경
+    #model_ConvLSTM = keras.layers.ConvLSTM2D(n_n_lstm, (1, 1))(input1_reshaped)
+    #model_ConvLSTM = keras.layers.Flatten()(model_ConvLSTM)
+    #model_ConvLSTM = keras.layers.Dropout(dropout)(model_ConvLSTM)
+    #model_ConvLSTM = keras.layers.Dense(18, activation='relu')(model_ConvLSTM)
 
 
     #model_LSTM=LSTM(n_n_lstm)(input1)
-    #model_LSTM=Dropout(dropout)(model_LSTM)
-    #model_LSTM=Dense(18, activation='relu')(model_LSTM)
+    model_LSTM=LSTM(n_n_lstm)(model_CNN)
+    model_LSTM=Dropout(dropout)(model_LSTM)
+    model_LSTM=Dense(18, activation='relu')(model_LSTM)
    
     meta_layer = keras.layers.Dense(147, activation="relu")(input2)
     meta_layer = keras.layers.Dense(64, activation="relu")(meta_layer)    
     meta_layer = keras.layers.Dense(32, activation="relu")(meta_layer)
 
-    model_merge = keras.layers.concatenate([model_ConvLSTM, meta_layer])
+    model_merge = keras.layers.concatenate([model_LSTM, meta_layer])
     model_merge = Dense(100, activation='relu')(model_merge)
     model_merge = Dropout(dropout)(model_merge)    
     output = Dense(n_steps_out, activation='sigmoid')(model_merge)
@@ -308,9 +314,12 @@ def run_ML(model_id,n_steps_out):
     
 def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out,
             n_n_lstm, dropout, bat_size): 
+    duration_list = []
+    
+    
     print('run 함수 실행')
-           
-    n_station = 7
+            
+    
     #n_station = 9
 
     #string =   'mixed_LSTM/data_chg_'
@@ -318,6 +327,8 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
     
     #station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv', string+'8.csv', string+'9.csv']
     #station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv', string2+'8.csv', string2+'9.csv']
+    
+    n_station = 7
     
     string =   'korea_data/data_chg_'
     string2 =  'korea_data/data_chg_pred_occ_t_'
@@ -330,6 +341,8 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
     res_all=[]; res_all_F1=[]
     
     for s in range(n_station):         
+        start_time = time.time()
+        
         X_train, y_train, X_test, y_test, X2_train, X2_test = read_data(station[s], station2[s], model_id,  
                                 n_steps_in, n_steps_out, n_features)
         
@@ -345,6 +358,14 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
                 res_list, important_features = fit_model_DecisionTree(X_train, y_train, X_test, y_test, X2_train, X2_test)
             elif model_id == 'XGBoost':
                  res_list = fit_model_xgboost(X_train, y_train, X_test, y_test, X2_train, X2_test)
+        end_time = time.time()
+       
+        duration = end_time - start_time
+        duration_list.append(duration)
+        print("학습 소요 시간 : ", duration)
+       
+        df = pd.DataFrame({'time': duration_list})
+        df.to_csv('time_uk_cnnSTM.csv')
 
         #print(res_F1)
         #print(res)
@@ -423,6 +444,10 @@ def main():
               n_epoch_global,n_trivals,n_n_lstm,dropout,bat_size)       
         print('accuracy_avg_1: ',accuracy_avg_1)
         print('accuracy_avg_2: ',accuracy_avg_2)
+        
+        df2 = pd.DataFrame({'acc': accuracy_avg_2})
+        df2.to_csv('acc_uk_cnnLSTM.csv')
+
         print('avg_metrics_prec_recall_F1= ',avg_metrics_prec_recall_F1)
        
     else:        
