@@ -114,7 +114,9 @@ def fit_model_MixLSTM(res_F1, res ,_iter, X_train, y_train, X_test, y_test, X2_t
     # CNN-LSTM
     model_CNN = keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(input1)
     model_CNN = keras.layers.MaxPooling1D(pool_size=2)(model_CNN)
-    
+    model_CNN = keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(model_CNN)
+    model_CNN = keras.layers.MaxPooling1D(pool_size=2)(model_CNN)
+    model_CNN = keras.layers.Reshape((model_CNN.shape[1], model_CNN.shape[2]))(model_CNN)
 
     # ConvLSTM 변경
     #model_ConvLSTM = keras.layers.ConvLSTM2D(n_n_lstm, (1, 1))(input1_reshaped)
@@ -365,7 +367,7 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
         print("학습 소요 시간 : ", duration)
        
         df = pd.DataFrame({'time': duration_list})
-        df.to_csv('time_uk_cnnSTM.csv')
+        df.to_csv('time_korea_cnnSTM_2.csv')
 
         #print(res_F1)
         #print(res)
@@ -446,7 +448,7 @@ def main():
         print('accuracy_avg_2: ',accuracy_avg_2)
         
         df2 = pd.DataFrame({'acc': accuracy_avg_2})
-        df2.to_csv('acc_uk_cnnLSTM.csv')
+        df2.to_csv('acc_korea_cnnLSTM_2.csv')
 
         print('avg_metrics_prec_recall_F1= ',avg_metrics_prec_recall_F1)
        
