@@ -109,18 +109,16 @@ def fit_model_MixLSTM(res_F1, res ,_iter, X_train, y_train, X_test, y_test, X2_t
     input1 = keras.Input(shape=(n_steps_in, n_features))
     input2 = keras.Input(shape=(147,))
 
-    input1_reshaped = keras.layers.Reshape((n_steps_in, 1, 1, n_features))(input1)
-
-    # CNN-LSTM
+    # cnnLSTM
     model_CNN = keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(input1)
-    model_CNN = keras.layers.MaxPooling1D(pool_size=1)(model_CNN)
-
-    model_CNN = keras.layers.Conv1D(filters=16, kernel_size=5, activation='relu')(model_CNN)
     model_CNN = keras.layers.MaxPooling1D(pool_size=2)(model_CNN)
-    
+    model_CNN = keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(model_CNN)
+    model_CNN = keras.layers.MaxPooling1D(pool_size=2)(model_CNN)
     model_CNN = keras.layers.Reshape((model_CNN.shape[1], model_CNN.shape[2]))(model_CNN)
+
     
     # ConvLSTM 변경
+    #input1_reshaped = keras.layers.Reshape((n_steps_in, 1, 1, n_features))(input1)
     #model_ConvLSTM = keras.layers.ConvLSTM2D(n_n_lstm, (1, 1))(input1_reshaped)
     #model_ConvLSTM = keras.layers.Flatten()(model_ConvLSTM)
     #model_ConvLSTM = keras.layers.Dropout(dropout)(model_ConvLSTM)
@@ -324,21 +322,21 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
     print('run 함수 실행')
             
     
-    #n_station = 9
+    n_station = 9
 
-    #string =   'mixed_LSTM/data_chg_'
-    #string2 =  'mixed_LSTm/data_chg_pred_occ_t_'
+    string =   'mixed_LSTM/data_chg_'
+    string2 =  'mixed_LSTm/data_chg_pred_occ_t_'
     
-    #station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv', string+'8.csv', string+'9.csv']
-    #station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv', string2+'8.csv', string2+'9.csv']
+    station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv', string+'8.csv', string+'9.csv']
+    station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv', string2+'8.csv', string2+'9.csv']
     
-    n_station = 7
+    #n_station = 7
     
-    string =   'korea_data/data_chg_'
-    string2 =  'korea_data/data_chg_pred_occ_t_'
+    #string =   'korea_data/data_chg_'
+    #string2 =  'korea_data/data_chg_pred_occ_t_'
 
-    station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv']
-    station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv']
+    #station =  [string+'1.csv',string+'2.csv',string+'3.csv',string+'4.csv',string+'5.csv',string+'6.csv',string+'7.csv']
+    #station2 = [string2+'1.csv',string2+'2.csv',string2+'3.csv',string2+'4.csv',string2+'5.csv',string2+'6.csv',string2+'7.csv']
 
     
   
@@ -369,7 +367,7 @@ def run(model_id, n_steps_in, n_steps_out, n_features, n_epoch, n_trivals, n_out
         print("학습 소요 시간 : ", duration)
        
         df = pd.DataFrame({'time': duration_list})
-        df.to_csv('time_korea_cnnSTM_filter_4.csv')
+        df.to_csv('time_uk_cnnSTM_.csv')
 
         #print(res_F1)
         #print(res)
@@ -450,7 +448,7 @@ def main():
         print('accuracy_avg_2: ',accuracy_avg_2)
         
         df2 = pd.DataFrame({'acc': accuracy_avg_2})
-        df2.to_csv('acc_korea_cnnLSTM_filter_4.csv')
+        df2.to_csv('acc_uk_cnnLSTM.csv')
 
         print('avg_metrics_prec_recall_F1= ',avg_metrics_prec_recall_F1)
        
